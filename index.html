@@ -18,11 +18,13 @@
     .signature-line { border-top: 1px solid #000; margin-top: 40px; }
     button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; }
     .download { background: #27ae60; color: #fff; }
+    textarea { resize: vertical; }
   </style>
 </head>
 <body>
   <h1>Historia Clínica Odontológica</h1>
   <form id="historiaClinica">
+
     <!-- Datos Generales -->
     <div class="section">
       <h2>Datos Generales</h2>
@@ -38,7 +40,16 @@
       </select>
       <label>Teléfono:</label>
       <input type="text" name="telefono">
+      <label>Dirección:</label>
+      <input type="text" name="direccion">
     </div>
+
+    <!-- Alertas -->
+    <div class="section">
+      <h2>Alertas</h2>
+      <textarea rows="3" placeholder="Ejemplo: Alergia a penicilina, hipertensión no controlada..."></textarea>
+    </div>
+
     <!-- Antecedentes Heredofamiliares -->
     <div class="section">
       <h2>Antecedentes Heredofamiliares Patológicos</h2>
@@ -47,9 +58,14 @@
         <tr><td>Diabetes</td><td><input type="text"></td><td><input type="text"></td></tr>
         <tr><td>Hipertensión</td><td><input type="text"></td><td><input type="text"></td></tr>
         <tr><td>Cáncer</td><td><input type="text"></td><td><input type="text"></td></tr>
-        <tr><td>Otras</td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Cardiopatías</td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Alergias</td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Otros</td><td><input type="text"></td><td><input type="text"></td></tr>
       </table>
+      <label>Observaciones generales:</label>
+      <textarea></textarea>
     </div>
+
     <!-- Antecedentes Personales -->
     <div class="section">
       <h2>Antecedentes Personales Patológicos</h2>
@@ -57,28 +73,49 @@
         <tr><th>Padecimiento</th><th>Fecha</th><th>Observaciones</th></tr>
         <tr><td>Diabetes</td><td><input type="date"></td><td><input type="text"></td></tr>
         <tr><td>Hipertensión</td><td><input type="date"></td><td><input type="text"></td></tr>
+        <tr><td>Cardiopatías</td><td><input type="date"></td><td><input type="text"></td></tr>
         <tr><td>Alergias</td><td><input type="date"></td><td><input type="text"></td></tr>
-        <tr><td>Otras</td><td><input type="date"></td><td><input type="text"></td></tr>
+        <tr><td>Otros</td><td><input type="date"></td><td><input type="text"></td></tr>
       </table>
+      <label>Observaciones generales:</label>
+      <textarea></textarea>
     </div>
+
     <!-- Aparatos y Sistemas -->
     <div class="section">
       <h2>Aparatos y Sistemas</h2>
+
       <h3>Cardiovascular</h3>
       <label>¿Tiene hipertensión arterial?</label>
       <select><option>No</option><option>Sí</option></select>
       <label>¿Ha presentado dolor torácico?</label>
       <select><option>No</option><option>Sí</option></select>
+      <label>¿Tiene antecedentes de infarto?</label>
+      <select><option>No</option><option>Sí</option></select>
       <label>Observaciones:</label>
       <textarea></textarea>
+
       <h3>Respiratorio</h3>
       <label>¿Presenta dificultad respiratoria?</label>
       <select><option>No</option><option>Sí</option></select>
       <label>¿Ha tenido asma?</label>
       <select><option>No</option><option>Sí</option></select>
+      <label>¿Ha tenido neumonía?</label>
+      <select><option>No</option><option>Sí</option></select>
+      <label>Observaciones:</label>
+      <textarea></textarea>
+
+      <h3>Digestivo</h3>
+      <label>¿Ha presentado gastritis?</label>
+      <select><option>No</option><option>Sí</option></select>
+      <label>¿Tiene enfermedad hepática?</label>
+      <select><option>No</option><option>Sí</option></select>
+      <label>¿Problemas de reflujo?</label>
+      <select><option>No</option><option>Sí</option></select>
       <label>Observaciones:</label>
       <textarea></textarea>
     </div>
+
     <!-- Odontograma -->
     <div class="section">
       <h2>Odontograma (Nomenclatura FDI)</h2>
@@ -88,18 +125,25 @@
         <tr><td>12</td><td><input type="text"></td><td>22</td><td><input type="text"></td></tr>
         <tr><td>13</td><td><input type="text"></td><td>23</td><td><input type="text"></td></tr>
         <tr><td>14</td><td><input type="text"></td><td>24</td><td><input type="text"></td></tr>
+        <tr><td>15</td><td><input type="text"></td><td>25</td><td><input type="text"></td></tr>
+        <tr><td>16</td><td><input type="text"></td><td>26</td><td><input type="text"></td></tr>
+        <tr><td>17</td><td><input type="text"></td><td>27</td><td><input type="text"></td></tr>
+        <tr><td>18</td><td><input type="text"></td><td>28</td><td><input type="text"></td></tr>
       </table>
     </div>
+
     <!-- Diagnóstico -->
     <div class="section">
       <h2>Diagnóstico</h2>
       <textarea rows="5"></textarea>
     </div>
+
     <!-- Tratamiento -->
     <div class="section">
       <h2>Tratamiento</h2>
       <textarea rows="5"></textarea>
     </div>
+
     <!-- Consentimiento Informado -->
     <div class="section">
       <h2>Consentimiento Informado</h2>
@@ -113,6 +157,7 @@
 7. He tenido la oportunidad de realizar preguntas y todas fueron contestadas satisfactoriamente.
 Firmo de conformidad.</textarea>
     </div>
+
     <!-- Firmas -->
     <div class="signature">
       <div>
@@ -124,16 +169,23 @@ Firmo de conformidad.</textarea>
         <p>Firma del odontólogo</p>
       </div>
     </div>
+
     <!-- Botón PDF -->
     <button type="button" class="download" onclick="downloadPDF()">Descargar en PDF</button>
   </form>
+
+  <!-- Librería jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
     async function downloadPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF("p", "pt", "a4");
       const form = document.getElementById("historiaClinica");
-      await doc.html(form, { callback: function (doc) { doc.save("Historia_Clinica.pdf"); } });
+      await doc.html(form, {
+        callback: function (doc) {
+          doc.save("Historia_Clinica.pdf");
+        }
+      });
     }
   </script>
 </body>
