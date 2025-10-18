@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Historia Clínica Odontológica - COFEPRIS</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+  body{background:#f8f9fa}
+  .tooth{width:44px;height:44px;border:1px solid #bbb;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:4px;user-select:none}
+  .tooth.state-0{background:#fff} .tooth.state-1{background:#ffcccc} .tooth.state-2{background:#fff3b0} .tooth.state-3{background:#cfe3ff}
+  .odontograma{display:grid;grid-template-columns:repeat(8,48px);gap:8px}
+  .signature-canvas{border:1px solid #ccc;border-radius:6px;width:100%;height:140px}
+  .footer-note{font-size:11px;color:#666}
+  .signature-line{border-top:1px solid #000;margin-top:40px;width:80%;margin-left:auto;margin-right:auto;height:1px;}
+</style>
+</head>
+<body>
+<nav class="navbar navbar-dark bg-primary mb-3">
+  <div class="container-fluid">
+    <span class="navbar-brand">Historia Clínica Odontológica</span>
+    <button id="btnGeneratePdf" class="btn btn-light">Generar PDF</button>
+  </div>
+</nav>
+
+<div class="container mb-5">
+  <form id="hcForm">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5>Datos Generales</h5>
+        <div class="row g-2">
+          <div class="col-md-4"><label class="form-label">Nombre completo</label><input id="nombre" class="form-control"></div>
+          <div class="col-md-2"><label class="form-label">Edad</label><input id="edad" class="form-control" type="number"></div>
+          <div class="col-md-3"><label class="form-label">Sexo</label><select id="sexo" class="form-select"><option></option><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
+          <div class="col-md-3"><label class="form-label">Teléfono</label><input id="telefono" class="form-control"></div>
+          <div class="col-md-6"><label class="form-label">Dirección</label><input id="direccion" class="form-control"></div>
+          <div class="col-md-6"><label class="form-label">Email</label><input id="email" class="form-control" type="email"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-6">
+        <div class="card mb-3"><div class="card-body">
+          <h5>Antecedentes Heredofamiliares</h5>
+          <table class="table table-sm"><thead><tr><th>Padecimiento</th><th>¿Tiene?</th><th>Familiar</th><th>Observaciones</th></tr></thead><tbody id="heredoTbl"></tbody></table>
+          <label class="form-label">Observaciones generales</label><textarea id="obsHeredo" class="form-control" rows="2"></textarea>
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+          <h5>Antecedentes Personales</h5>
+          <table class="table table-sm"><thead><tr><th>Padecimiento</th><th>¿Tiene?</th><th>Fecha</th><th>Observaciones</th></tr></thead><tbody id="personalTbl"></tbody></table>
+          <label class="form-label">Observaciones generales</label><textarea id="obsPersonal" class="form-control" rows="2"></textarea>
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+          <h5>Alergias y Medicación</h5>
+          <label class="form-label">Alergias (editable)</label><input id="alergias" class="form-control">
+          <label class="form-label mt-2">Medicación crónica</label><input id="medicacion" class="form-control">
+        </div></div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card mb-3"><div class="card-body">
+          <h5>Aparatos y Sistemas</h5>
+          <div id="systems"></div>
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+          <h5>Odontograma (FDI) - interactivo</h5>
+          <p class="small text-muted">Click en cada diente para cambiar estado: Normal → Cariado → Restaurado → Ausente</p>
+          <div id="odontograma" class="odontograma mb-2"></div>
+          <label class="form-label">Notas odontograma</label><textarea id="odontoNotas" class="form-control" rows="2"></textarea>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="card mb-3"><div class="card-body">
+      <h5>Diagnóstico</h5><textarea id="diagnostico" class="form-control" rows="3"></textarea>
+    </div></div>
+
+    <div class="card mb-3"><div class="card-body">
+      <h5>Tratamiento</h5><textarea id="tratamiento" class="form-control" rows="3"></textarea>
+    </div></div>
+
+    <div class="card mb-3"><div class="card-body">
+      <h5>Consentimiento Informado (Legal)</h5>
+      <label class="form-label">Procedimiento a realizar</label><input id="proc" class="form-control" placeholder="Ej. Endodoncia, Extracción...">
+      <label class="form-label mt-2">Texto del consentimiento (editable)</label>
+      <textarea id="consent" class="form-control" rows="10">CONSENTIMIENTO INFORMADO PARA PROCEDIMIENTOS ODONTOLÓGICOS
+
+DATOS DEL PACIENTE:
+Nombre: [NOMBRE DEL PACIENTE]
+Documento de identidad: [DOCUMENTO]
+Edad: [EDAD]
+
+DESCRIPCIÓN DEL PROCEDIMIENTO:
+He sido informado en términos claros y comprensibles acerca del procedimiento: [ESPECIFICAR PROCEDIMIENTO], incluyendo las etapas, el material a utilizar y la duración estimada.
+
+RIESGOS Y COMPLICACIONES POSIBLES:
+Se me han explicado los riesgos y complicaciones potenciales asociados al procedimiento, entre los que se encuentran, sin limitarse a: infección, hemorragia, dolor, lesión en tejidos adyacentes, reacciones alérgicas, necesidad de procedimientos adicionales, fracaso del tratamiento, pérdida de piezas dentales y complicaciones anestésicas.
+
+ALTERNATIVAS:
+Se me han explicado las alternativas terapéuticas, sus ventajas, desventajas y riesgos, incluyendo la opción de no recibir tratamiento.
+
+MEDIDAS Y PRECAUCIONES:
+Se me han informado las medidas que el profesional adoptará para reducir riesgos, así como las recomendaciones pre y post operatorias.
+
+REVOCACIÓN Y DERECHOS:
+Entiendo que puedo revocar mi consentimiento en cualquier momento antes de que el procedimiento sea realizado y que toda la información clínica será tratada con confidencialidad conforme a la normativa aplicable.
+
+ACEPTACIÓN:
+Declaro que he comprendido la información proporcionada, que se me ha dado la oportunidad de formular preguntas y que recibí respuestas satisfactorias. Autorizo al odontólogo y su equipo a realizar el procedimiento descrito.
+
+Lugar y fecha: ___________________________
+
+Firma del paciente/tutor: ___________________________
+
+Firma del odontólogo responsable: ___________________________</textarea>
+    </div></div>
+
+    <div class="row mb-4">
+      <div class="col-md-6"><div class="card"><div class="card-body">
+        <h6>Firma del Paciente/Tutor (dibujar)</h6>
+        <canvas id="sigPac" class="signature-canvas"></canvas>
+        <div class="mt-2"><button type="button" id="clearPac" class="btn btn-sm btn-secondary">Borrar firma</button></div>
+      </div></div></div>
+
+      <div class="col-md-6"><div class="card"><div class="card-body">
+        <h6>Firma del Odontólogo (dibujar)</h6>
+        <canvas id="sigDoc" class="signature-canvas"></canvas>
+        <div class="mt-2"><button type="button" id="clearDoc" class="btn btn-sm btn-secondary">Borrar firma</button></div>
+      </div></div></div>
+    </div>
+
+    <div class="mb-5">
+      <label class="form-label">Observaciones generales</label>
+      <textarea id="obsgen" class="form-control" rows="3"></textarea>
+    </div>
+
+    <div class="d-flex justify-content-between mb-5">
+      <div class="text-center" style="width:48%">
+        <div class="signature-line"></div><div>Firma del paciente</div>
+      </div>
+      <div class="text-center" style="width:48%">
+        <div class="signature-line"></div><div>Firma del odontólogo</div>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/signature_pad/3.0.0-beta.4/signature_pad.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+
+<script>
+// Change "palpitaciones" question text and systems
+const systemsData = {
+  "Cardiovascular":[
+    "¿Ha presentado sensación de ritmo cardíaco irregular o acelerado?",
+    "Hipertensión",
+    "Infartos previos",
+    "Dolor torácico",
+    "Fatiga al esfuerzo",
+    "Hinchazón en extremidades",
+    "Arritmias diagnosticadas",
+    "Uso de medicación cardiovascular",
+    "Síncopes",
+    "Hospitalizaciones cardiacas"
+  ],
+  "Respiratorio":[ "Tos crónica","Asma","Bronquitis","Dificultad para respirar","Sibilancias","Neumonías previas","Fuma actualmente","Exposición a polvo/humo","Uso de broncodilatadores","Hospitalizaciones respiratorias"],
+  "Digestivo":[ "Reflujo/Acidez","Náuseas frecuentes","Vómitos","Diarrea crónica","Estreñimiento","Enfermedad hepática","Úlceras","Cirugías abdominales previas","Dieta especial","Medicamentos digestivos"],
+  "Nervioso":[ "Convulsiones","Migrañas","Mareos/Vértigo","Pérdida de conciencia","Trastornos sensoriales","Ansiedad/Depresión","Insomnio","Problemas de coordinación","Uso de medicación neurológica","Hospitalizaciones neurológicas"],
+  "Endocrino":[ "Diabetes","Problemas tiroideos","Alteraciones hormonales","Obesidad","Pérdida de peso involuntaria","Hipoglucemias","Fatiga crónica","Uso de medicación endocrina","Menopausia/andropausia","Antecedente familiar endocrino"],
+  "Musculoesquelético":[ "Dolor articular","Rigidez matutina","Debilidad muscular","Lesiones previas","Fracturas","Prótesis/soportes","Limitación de movimiento","Dolor de espalda","Uso de analgésicos","Actividad física regular"]
+};
+
+// build systems UI
+const systemsDiv = document.getElementById('systems');
+for(const [sys, qs] of Object.entries(systemsData)){
+  const card = document.createElement('div');
+  card.className = 'card mb-3';
+  let inner = '<div class="card-body"><h6>'+sys+'</h6><div class="row g-2">';
+  qs.forEach(q => {
+    inner += `<div class="col-md-6"><label class="form-label small">${q}</label><select class="form-select"><option></option><option>Sí</option><option>No</option></select></div>`;
+  });
+  inner += `</div><label class="form-label mt-2">Observaciones ${sys}</label><textarea class="form-control" rows="2"></textarea></div>`;
+  card.innerHTML = inner;
+  systemsDiv.appendChild(card);
+}
+
+// populate heredofamiliares and personales
+const heredolist = ["Diabetes","Hipertensión","Cardiopatías","Cáncer","Asma","Epilepsia","Alergias","Enfermedad renal","Enfermedad hepática","Otros"];
+const personallist = ["Cirugías previas","Hospitalizaciones","Traumatismos","Enfermedades infectocontagiosas","Enfermedades respiratorias","Enfermedades digestivas","Medicamentos crónicos","Alergias","Hábitos de salud","Otros"];
+const herTable = document.getElementById('heredoTbl');
+const perTable = document.getElementById('personalTbl');
+heredolist.forEach(h => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${h}</td><td><select class="form-select"><option></option><option>Sí</option><option>No</option></select></td><td><input class="form-control" type="text"></td><td><input class="form-control" type="text"></td>`;
+  herTable.appendChild(tr);
+});
+personallist.forEach(p => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${p}</td><td><select class="form-select"><option></option><option>Sí</option><option>No</option></select></td><td><input class="form-control" type="date"></td><td><input class="form-control" type="text"></td>`;
+  perTable.appendChild(tr);
+});
+
+// Odontograma FDI
+const fdi = [11,12,13,14,15,16,17,18,21,22,23,24,25,26,27,28,31,32,33,34,35,36,37,38,41,42,43,44,45,46,47,48];
+const odontoDiv = document.getElementById('odontograma');
+fdi.forEach(n => {
+  const d = document.createElement('div');
+  d.className = 'tooth state-0 text-center';
+  d.dataset.fdi = n;
+  d.dataset.state = 0;
+  d.innerHTML = `<div style="font-size:12px">${n}</div>`;
+  d.addEventListener('click', ()=>{
+    let s = parseInt(d.dataset.state);
+    s = (s+1)%4;
+    d.dataset.state = s;
+    d.className = 'tooth state-'+s+' text-center';
+    updateOdontoNotes();
+  });
+  odontoDiv.appendChild(d);
+});
+
+function updateOdontoNotes(){
+  const labels = {0:"Normal",1:"Cariado",2:"Restaurado",3:"Ausente"};
+  const notes = [];
+  document.querySelectorAll('#odontograma .tooth').forEach(t=>{
+    if(t.dataset.state !== '0') notes.push(t.dataset.fdi + ': ' + labels[t.dataset.state]);
+  });
+  document.getElementById('odontoNotas').value = notes.join('; ');
+}
+
+// Signature pads
+const sigPacCanvas = document.getElementById('sigPac');
+const sigDocCanvas = document.getElementById('sigDoc');
+function resizeCanvas(canvas){
+  const ratio = Math.max(window.devicePixelRatio || 1, 1);
+  canvas.width = canvas.offsetWidth * ratio;
+  canvas.height = canvas.offsetHeight * ratio;
+  canvas.getContext('2d').scale(ratio, ratio);
+}
+resizeCanvas(sigPacCanvas); resizeCanvas(sigDocCanvas);
+const sigPac = new SignaturePad(sigPacCanvas, {backgroundColor: 'rgba(255,255,255,0)'});
+const sigDoc = new SignaturePad(sigDocCanvas, {backgroundColor: 'rgba(255,255,255,0)'});
+document.getElementById('clearPac').addEventListener('click', ()=>sigPac.clear());
+document.getElementById('clearDoc').addEventListener('click', ()=>sigDoc.clear());
+window.addEventListener('resize', ()=>{ resizeCanvas(sigPacCanvas); resizeCanvas(sigDocCanvas); sigPac.clear(); sigDoc.clear(); });
+
+// Generate PDF with html2pdf and add footer with date and page numbers
+document.getElementById('btnGeneratePdf').addEventListener('click', async ()=>{
+  // signature images
+  const sigPacData = sigPac.isEmpty() ? null : sigPac.toDataURL('image/png');
+  const sigDocData = sigDoc.isEmpty() ? null : sigDoc.toDataURL('image/png');
+
+  // set filename with patient name and date
+  const name = (document.getElementById('nombre').value || 'Paciente').replace(/\s+/g, '_');
+  const dateStr = new Date().toISOString().slice(0,19).replace('T','_').replace(/:/g,'-');
+  const filename = `Historia_Clinica_${name}_${dateStr}.pdf`;
+
+  // before generating PDF, temporarily append signature images into form so they appear in PDF
+  if(sigPacData){
+    const img = document.createElement('img'); img.src = sigPacData; img.style.width='220px'; img.id='__sigPacImg'; 
+    document.getElementById('sigPac').parentNode.appendChild(img);
+  }
+  if(sigDocData){
+    const img2 = document.createElement('img'); img2.src = sigDocData; img2.style.width='220px'; img2.id='__sigDocImg';
+    document.getElementById('sigDoc').parentNode.appendChild(img2);
+  }
+
+  const opt = {
+    margin:       [0.4,0.4,0.9,0.4],
+    filename:     filename,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 1.6, useCORS: true },
+    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(document.querySelector('body')).toPdf().get('pdf').then(function (pdf) {
+    const totalPages = pdf.internal.getNumberOfPages();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const now = new Date().toLocaleString();
+    for(let i=1;i<=totalPages;i++){
+      pdf.setPage(i);
+      pdf.setFontSize(9);
+      pdf.setTextColor(100);
+      pdf.text(`Generado: ${now}`, 0.5, pageHeight - 0.3);
+      pdf.text(`Página ${i} de ${totalPages}`, pageWidth/2, pageHeight - 0.3, {align:'center'});
+      pdf.text(`Historia Clínica Odontológica`, pageWidth - 0.5, pageHeight - 0.3, {align:'right'});
+    }
+  }).save().finally(()=>{
+    // remove temp images
+    const t1 = document.getElementById('__sigPacImg'); if(t1) t1.remove();
+    const t2 = document.getElementById('__sigDocImg'); if(t2) t2.remove();
+  });
+
+});
+</script>
+</body>
+</html>
