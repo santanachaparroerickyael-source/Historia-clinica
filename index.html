@@ -1,429 +1,306 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Historia Clínica Odontológica</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body { font-family: "Times New Roman", serif; background:#fff; color:#000; }
-    .card { border:1px solid #000; margin-bottom:10px; }
-    label { font-weight: 600; }
-    .odontograma{ display:grid; grid-template-columns: repeat(8,48px); gap:6px; }
-    .tooth{ width:48px; height:48px; border:1px solid #000; display:flex; align-items:center; justify-content:center; cursor:pointer; user-select:none; font-size:12px; }
-    .tooth.state-0{ background:#fff; color:#000; }
-    .tooth.state-1{ background:#dcdcdc; color:#000; } /* caries */
-    .tooth.state-2{ background:#bfbfbf; color:#000; } /* restaurado */
-    .tooth.state-3{ background:#7f7f7f; color:#fff; } /* ausente */
-    .signature-canvas{ border:1px solid #000; width:100%; height:120px; display:block; }
-    @media print {
-      body { background:#fff; color:#000; }
-      input, textarea, select { border:1px solid #000; background: #fff; color:#000; }
-    }
-    .small-muted { color:#333; font-size:0.9rem; }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Historia Clínica Odontológica - Offline</title>
+<style>
+  body{font-family: "Times New Roman", serif; margin:16px; color:#000; background:#fff}
+  h2{text-align:center}
+  .card{border:1px solid #000; padding:10px; margin-bottom:10px}
+  label{font-weight:600; display:block; margin-bottom:4px}
+  input, textarea, select{width:100%; padding:6px; box-sizing:border-box; border:1px solid #000; background:#fff}
+  .row{display:flex; gap:10px; margin-bottom:8px}
+  .col{flex:1}
+  .odontograma{display:grid; grid-template-columns:repeat(8,48px); gap:6px; margin:8px 0}
+  .tooth{width:48px; height:48px; border:1px solid #000; display:flex; align-items:center; justify-content:center; cursor:pointer; user-select:none}
+  .tooth.s0{background:#fff} .tooth.s1{background:#dcdcdc} .tooth.s2{background:#bfbfbf} .tooth.s3{background:#7f7f7f; color:#fff}
+  canvas.sig{border:1px solid #000; width:100%; height:120px; touch-action: none}
+  .btn{display:inline-block; padding:8px 12px; border:1px solid #000; background:#eee; cursor:pointer; margin-right:8px}
+  .btn.primary{background:#ccc}
+  table{width:100%; border-collapse:collapse}
+  th, td{border:1px solid #000; padding:4px; font-size:14px}
+  .small{font-size:0.9rem}
+  @media print{
+    .no-print{display:none}
+  }
+</style>
 </head>
 <body>
-  <div class="container my-3">
-    <h2 class="text-center mb-2">Historia Clínica Odontológica</h2>
-    <p class="text-center small-muted mb-3">Documento para registro clínico. Complete con datos verídicos.</p>
+<h2>Historia Clínica Odontológica</h2>
+<div class="no-print" style="margin-bottom:10px; text-align:center">
+  <button id="btnPrint" class="btn primary">Generar PDF / Imprimir</button>
+  <button id="btnDownloadHtml" class="btn">Descargar HTML</button>
+</div>
 
-    <!-- ALERTAS -->
-    <div class="mb-2">
-      <label class="form-label">Alertas</label>
-      <textarea id="alertas" class="form-control" rows="2" placeholder="Ej. Alergia severa a penicilina, anticoagulantes, etc."></textarea>
+<div>
+  <label>Alertas</label>
+  <textarea id="alertas" rows="2"></textarea>
+</div>
+
+<form id="form">
+  <div class="card">
+    <h3>Datos Generales</h3>
+    <div class="row">
+      <div class="col"><label>Nombre completo</label><input id="nombre" placeholder="Nombre y apellidos"></div>
+      <div class="col"><label>Edad</label><input id="edad" type="number"></div>
+      <div class="col"><label>Sexo</label><select id="sexo"><option></option><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
     </div>
-
-    <form id="hcForm">
-      <!-- Datos Generales -->
-      <div class="card p-2">
-        <h5>Datos Generales</h5>
-        <div class="row g-2">
-          <div class="col-md-4"><label>Nombre completo</label><input id="nombre" class="form-control"></div>
-          <div class="col-md-2"><label>Edad</label><input id="edad" type="number" class="form-control"></div>
-          <div class="col-md-3"><label>Sexo</label><select id="sexo" class="form-select"><option></option><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
-          <div class="col-md-3"><label>Teléfono</label><input id="telefono" class="form-control"></div>
-          <div class="col-md-6"><label>Dirección</label><input id="direccion" class="form-control"></div>
-          <div class="col-md-6"><label>Correo electrónico</label><input id="email" type="email" class="form-control"></div>
-        </div>
-      </div>
-
-      <div class="row">
-        <!-- Column Left -->
-        <div class="col-lg-6">
-          <!-- Antecedentes Heredofamiliares -->
-          <div class="card p-2">
-            <h5>Antecedentes Heredofamiliares</h5>
-            <table class="table table-sm" id="tblHeredo">
-              <thead><tr><th>Padecimiento</th><th>¿Tiene?</th><th>Familiar</th><th>Observaciones</th></tr></thead>
-              <tbody id="heredoTbl"></tbody>
-            </table>
-            <label>Observaciones (heredofamiliares)</label>
-            <textarea id="obs_heredo" class="form-control" rows="2"></textarea>
-          </div>
-
-          <!-- Antecedentes Personales -->
-          <div class="card p-2">
-            <h5>Antecedentes Personales Patológicos</h5>
-            <table class="table table-sm" id="tblPersonal">
-              <thead><tr><th>Padecimiento</th><th>¿Tiene?</th><th>Fecha</th><th>Observaciones</th></tr></thead>
-              <tbody id="personalTbl"></tbody>
-            </table>
-            <label>Observaciones (personales)</label>
-            <textarea id="obs_personal" class="form-control" rows="2"></textarea>
-          </div>
-
-          <!-- Alergias y Medicación -->
-          <div class="card p-2">
-            <h5>Alergias y Medicación</h5>
-            <label>Alergias (editable)</label>
-            <input id="alergias" class="form-control" placeholder="Ej. Penicilina: urticaria">
-            <label class="mt-2">Medicación crónica</label>
-            <input id="medicacion" class="form-control" placeholder="Ej. Enalapril 10 mg diario">
-          </div>
-        </div>
-
-        <!-- Column Right -->
-        <div class="col-lg-6">
-          <!-- Aparatos y Sistemas -->
-          <div class="card p-2 mb-3">
-            <h5>Aparatos y Sistemas</h5>
-            <div id="systems"></div>
-          </div>
-
-          <!-- Odontograma -->
-          <div class="card p-2">
-            <h5>Odontograma (FDI)</h5>
-            <p class="small-muted">Clic en un diente para cambiar estado: Normal → Cariado → Restaurado → Ausente</p>
-            <div id="odontograma" class="odontograma mb-2" aria-hidden="false"></div>
-            <label>Notas odontograma</label>
-            <textarea id="odontoNotas" class="form-control" rows="2"></textarea>
-          </div>
-        </div>
-      </div>
-
-      <!-- Diagnóstico y Tratamiento -->
-      <div class="card p-2 mt-2">
-        <h5>Diagnóstico</h5>
-        <textarea id="diagnostico" class="form-control" rows="3"></textarea>
-      </div>
-
-      <div class="card p-2 mt-2">
-        <h5>Tratamiento</h5>
-        <textarea id="tratamiento" class="form-control" rows="3"></textarea>
-      </div>
-
-      <!-- Consentimiento -->
-      <div class="card p-2 mt-2">
-        <h5>Consentimiento Informado (versión general - editable)</h5>
-        <label>Procedimiento a realizar</label>
-        <input id="proc" class="form-control" placeholder="Ej. Endodoncia, Extracción...">
-        <label class="mt-2">Texto del Consentimiento (edítelo si lo requiere)</label>
-        <textarea id="consent" class="form-control" rows="9">CONSENTIMIENTO INFORMADO: He sido informado en términos claros sobre el procedimiento, su propósito, duración aproximada, riesgos y alternativas. Entiendo que puedo revocar mi consentimiento antes del procedimiento. Autorizo al equipo odontológico a realizar el procedimiento seleccionado.</textarea>
-      </div>
-
-      <!-- Firmas -->
-      <div class="row mt-3 mb-4">
-        <div class="col-md-6">
-          <h6>Firma del paciente / tutor (dibujar)</h6>
-          <canvas id="sigPac" class="signature-canvas"></canvas>
-          <div class="mt-2"><button type="button" id="clearPac" class="btn btn-sm btn-secondary">Borrar firma</button></div>
-        </div>
-        <div class="col-md-6">
-          <h6>Firma del odontólogo (dibujar)</h6>
-          <canvas id="sigDoc" class="signature-canvas"></canvas>
-          <div class="mt-2"><button type="button" id="clearDoc" class="btn btn-sm btn-secondary">Borrar firma</button></div>
-        </div>
-      </div>
-
-      <div class="mb-4">
-        <label>Observaciones generales</label>
-        <textarea id="obs_general" class="form-control" rows="3"></textarea>
-      </div>
-
-    </form>
+    <div class="row">
+      <div class="col"><label>Teléfono</label><input id="telefono"></div>
+      <div class="col"><label>Dirección</label><input id="direccion"></div>
+      <div class="col"><label>Email</label><input id="email" type="email"></div>
+    </div>
   </div>
 
-  <!-- Librerías -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/signature_pad/3.0.0-beta.4/signature_pad.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <div class="card">
+    <h3>Antecedentes Heredofamiliares</h3>
+    <table id="heredotbl"><thead><tr><th>Padecimiento</th><th>¿Tiene?</th><th>Familiar</th><th>Observaciones</th></tr></thead><tbody></tbody></table>
+    <label>Observaciones (heredofamiliares)</label><textarea id="obs_heredo" rows="2"></textarea>
+  </div>
 
-  <!-- Script principal -->
-  <script>
-  (function(){
-    const systemsData = {
-      "Cardiovascular":[
-        "¿Ha presentado sensación de ritmo cardíaco irregular o acelerado?",
-        "Hipertensión",
-        "Infartos previos",
-        "Dolor torácico",
-        "Fatiga al esfuerzo",
-        "Hinchazón en extremidades",
-        "Arritmias diagnosticadas",
-        "Uso de medicación cardiovascular",
-        "Síncopes",
-        "Hospitalizaciones cardiacas"
-      ],
-      "Respiratorio":[ "Tos crónica","Asma","Bronquitis","Dificultad para respirar","Sibilancias","Neumonías previas","Fuma actualmente","Exposición a polvo/humo","Uso de broncodilatadores","Hospitalizaciones respiratorias"],
-      "Digestivo":[ "Reflujo/Acidez","Náuseas frecuentes","Vómitos","Diarrea crónica","Estreñimiento","Enfermedad hepática","Úlceras","Cirugías abdominales previas","Dieta especial","Medicamentos digestivos"],
-      "Nervioso":[ "Convulsiones","Migrañas","Mareos/Vértigo","Pérdida de conciencia","Trastornos sensoriales","Ansiedad/Depresión","Insomnio","Problemas de coordinación","Uso de medicación neurológica","Hospitalizaciones neurológicas"],
-      "Endocrino":[ "Diabetes","Problemas tiroideos","Alteraciones hormonales","Obesidad","Pérdida de peso involuntaria","Hipoglucemias","Fatiga crónica","Uso de medicación endocrina","Menopausia/andropausia","Antecedente familiar endocrino"],
-      "Musculoesquelético":[ "Dolor articular","Rigidez matutina","Debilidad muscular","Lesiones previas","Fracturas","Prótesis/soportes","Limitación de movimiento","Dolor de espalda","Uso de analgésicos","Actividad física regular"]
-    };
+  <div class="card">
+    <h3>Antecedentes Personales Patológicos</h3>
+    <table id="personaltbl"><thead><tr><th>Padecimiento</th><th>¿Tiene?</th><th>Fecha</th><th>Observaciones</th></tr></thead><tbody></tbody></table>
+    <label>Observaciones (personales)</label><textarea id="obs_personal" rows="2"></textarea>
+  </div>
 
-    const systemsContainer = document.getElementById('systems');
-    Object.entries(systemsData).forEach(([sys, questions])=>{
-      const card = document.createElement('div');
-      card.className = 'card mb-2';
-      const body = document.createElement('div');
-      body.className = 'card-body';
-      const title = document.createElement('h6'); title.textContent = sys;
-      body.appendChild(title);
+  <div class="card">
+    <h3>Alergias y Medicación</h3>
+    <label>Alergias (editable)</label><input id="alergias" placeholder="Ej. Penicilina: urticaria">
+    <label>Medicación crónica</label><input id="medicacion" placeholder="Ej. Enalapril 10 mg diario">
+  </div>
 
-      const row = document.createElement('div'); row.className = 'row g-2';
-      questions.forEach(q => {
-        const col = document.createElement('div'); col.className = 'col-md-6';
-        const label = document.createElement('label'); label.textContent = q;
-        const select = document.createElement('select'); select.className = 'form-select';
-        select.innerHTML = '<option></option><option>Sí</option><option>No</option>';
-        col.appendChild(label); col.appendChild(select);
-        row.appendChild(col);
-      });
-      body.appendChild(row);
+  <div class="card">
+    <h3>Aparatos y Sistemas</h3>
+    <div id="systems"></div>
+  </div>
 
-      const obsLabel = document.createElement('label'); obsLabel.className='mt-2'; obsLabel.textContent = 'Observaciones ' + sys;
-      const obs = document.createElement('textarea'); obs.className = 'form-control'; obs.rows=2;
-      body.appendChild(obsLabel); body.appendChild(obs);
+  <div class="card">
+    <h3>Odontograma (FDI)</h3>
+    <div class="odontograma" id="odontograma"></div>
+    <label>Notas odontograma</label><textarea id="odontoNotas" rows="2"></textarea>
+  </div>
 
-      card.appendChild(body);
-      systemsContainer.appendChild(card);
+  <div class="card">
+    <h3>Diagnóstico</h3>
+    <textarea id="diagnostico" rows="3"></textarea>
+  </div>
+
+  <div class="card">
+    <h3>Tratamiento</h3>
+    <textarea id="tratamiento" rows="3"></textarea>
+  </div>
+
+  <div class="card">
+    <h3>Consentimiento Informado</h3>
+    <label>Procedimiento a realizar</label><input id="proc" placeholder="Ej. Endodoncia, Extracción...">
+    <label>Texto del consentimiento</label>
+    <textarea id="consent" rows="6">CONSENTIMIENTO INFORMADO: He sido informado en términos claros sobre el procedimiento, sus riesgos y alternativas. Autorizo al odontólogo a realizar el procedimiento.
+Autorizo al profesional de la salud a realizar los procedimientos odontológicos requeridos y el manejo de mis datos personales conforme a la Ley General de Salud, el Reglamento de la Ley General de Salud en Materia de Prestación de Servicios de Atención Médica, y la NOM-004-SSA3-2012.</textarea>
+  </div>
+
+  <div class="card">
+    <h3>Firmas</h3>
+    <div style="display:flex; gap:10px">
+      <div style="flex:1"><label>Firma Paciente</label><canvas id="sigPac" class="sig"></canvas><div style="margin-top:6px"><button type="button" id="clearPac" class="btn">Borrar</button></div></div>
+      <div style="flex:1"><label>Firma Odontólogo</label><canvas id="sigDoc" class="sig"></canvas><div style="margin-top:6px"><button type="button" id="clearDoc" class="btn">Borrar</button></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Observaciones Generales</h3>
+    <textarea id="obs_general" rows="3"></textarea>
+  </div>
+</form>
+
+<script>
+/* Construcción de listas, sistemas, odontograma y firma ligera */
+const heredoList = ["Diabetes","Hipertensión","Cardiopatías","Cáncer","Asma","Epilepsia","Alergias","Enfermedad renal","Enfermedad hepática","Otros"];
+const personalList = ["Cirugías previas","Hospitalizaciones","Traumatismos","Enfermedades infectocontagiosas","Enfermedades respiratorias","Enfermedades digestivas","Medicamentos crónicos","Alergias","Otros"];
+const herTbody = document.querySelector('#heredotbl tbody');
+heredoList.forEach(h=>{
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${h}</td><td><select><option></option><option>Sí</option><option>No</option></select></td><td><input></td><td><input></td>`;
+  herTbody.appendChild(tr);
+});
+const perTbody = document.querySelector('#personaltbl tbody');
+personalList.forEach(p=>{
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${p}</td><td><select><option></option><option>Sí</option><option>No</option></select></td><td><input type="date"></td><td><input></td>`;
+  perTbody.appendChild(tr);
+});
+
+const systems = {
+  "Cardiovascular":["¿Ha presentado sensación de ritmo cardíaco irregular o acelerado?","Hipertensión","Infartos previos","Dolor torácico","Fatiga al esfuerzo","Hinchazón en extremidades","Arritmias diagnosticadas","Uso de medicación cardiovascular","Síncopes","Hospitalizaciones cardiacas"],
+  "Respiratorio":["Tos crónica","Asma","Bronquitis","Dificultad para respirar","Sibilancias","Neumonías previas","Fuma actualmente","Exposición a polvo/humo","Uso de broncodilatadores","Hospitalizaciones respiratorias"],
+  "Digestivo":["Reflujo/Acidez","Náuseas frecuentes","Vómitos","Diarrea crónica","Estreñimiento","Enfermedad hepática","Úlceras","Cirugías abdominales previas","Dieta especial","Medicamentos digestivos"],
+  "Nervioso":["Convulsiones","Migrañas","Mareos/Vértigo","Pérdida de conciencia","Trastornos sensoriales","Ansiedad/Depresión","Insomnio","Problemas de coordinación","Uso de medicación neurológica","Hospitalizaciones neurológicas"],
+  "Endocrino":["Diabetes","Problemas tiroideos","Alteraciones hormonales","Obesidad","Pérdida de peso involuntaria","Hipoglucemias","Fatiga crónica","Uso de medicación endocrina","Menopausia/andropausia","Antecedente familiar endocrino"],
+  "Musculoesquelético":["Dolor articular","Rigidez matutina","Debilidad muscular","Lesiones previas","Fracturas","Prótesis/soportes","Limitación de movimiento","Dolor de espalda","Uso de analgésicos","Actividad física regular"]
+};
+const systemsDiv = document.getElementById('systems');
+Object.entries(systems).forEach(([k,qs])=>{
+  const card = document.createElement('div');
+  card.style.border='1px solid #000'; card.style.padding='8px'; card.style.marginBottom='8px';
+  const h = document.createElement('h4'); h.textContent = k; card.appendChild(h);
+  const row = document.createElement('div'); row.style.display='flex'; row.style.flexWrap='wrap'; row.style.gap='8px';
+  qs.forEach(q=>{
+    const wrapper = document.createElement('div'); wrapper.style.flex='0 0 48%';
+    const label = document.createElement('label'); label.textContent = q; wrapper.appendChild(label);
+    const sel = document.createElement('select'); sel.innerHTML = '<option></option><option>Sí</option><option>No</option>'; sel.style.width='100%';
+    wrapper.appendChild(sel);
+    row.appendChild(wrapper);
+  });
+  card.appendChild(row);
+  const obs = document.createElement('div'); obs.innerHTML = '<label>Observaciones</label><textarea rows="2"></textarea>'; card.appendChild(obs);
+  systemsDiv.appendChild(card);
+});
+
+const fdi = [11,12,13,14,15,16,17,18,21,22,23,24,25,26,27,28,31,32,33,34,35,36,37,38,41,42,43,44,45,46,47,48];
+const odDiv = document.getElementById('odontograma');
+fdi.forEach(n=>{
+  const d = document.createElement('div'); d.className='tooth s0'; d.dataset.state='0'; d.dataset.fdi=n; d.textContent=n;
+  d.addEventListener('click', ()=>{
+    const s = (parseInt(d.dataset.state)+1)%4;
+    d.dataset.state = s; d.className = 'tooth s'+s;
+    updateOdontoNotes();
+  });
+  odDiv.appendChild(d);
+});
+function updateOdontoNotes(){ const labels={0:'Normal',1:'Cariado',2:'Restaurado',3:'Ausente'}; const arr=[]; document.querySelectorAll('#odontograma .tooth').forEach(t=>{ if(t.dataset.state!='0') arr.push(t.dataset.fdi+': '+labels[t.dataset.state]);}); document.getElementById('odontoNotas').value = arr.join('; '); }
+
+function makeSignature(canvas){
+  const ctx = canvas.getContext('2d');
+  let drawing=false;
+  let lastX=0, lastY=0;
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  function resize(){
+    const ratio = Math.max(window.devicePixelRatio||1,1);
+    const w = canvas.offsetWidth;
+    const h = canvas.offsetHeight;
+    canvas.width = Math.floor(w*ratio);
+    canvas.height = Math.floor(h*ratio);
+    ctx.scale(ratio, ratio);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  function getPos(e){
+    if(e.touches && e.touches.length) e = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    return {x: e.clientX - rect.left, y: e.clientY - rect.top};
+  }
+  canvas.addEventListener('pointerdown', (e)=>{ drawing=true; const p=getPos(e); lastX=p.x; lastY=p.y; });
+  canvas.addEventListener('pointermove', (e)=>{ if(!drawing) return; const p=getPos(e); ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke(); lastX=p.x; lastY=p.y; });
+  canvas.addEventListener('pointerup', ()=>{ drawing=false; });
+  canvas.addEventListener('pointerleave', ()=>{ drawing=false; });
+  window.addEventListener('resize', resize);
+  resize();
+  return {
+    clear: ()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); },
+    isEmpty: ()=>{ const blank = document.createElement('canvas'); blank.width=canvas.width; blank.height=canvas.height; return canvas.toDataURL() === blank.toDataURL(); },
+    toDataURL: ()=> canvas.toDataURL('image/png')
+  };
+}
+const sigPac = makeSignature(document.getElementById('sigPac'));
+const sigDoc = makeSignature(document.getElementById('sigDoc'));
+document.getElementById('clearPac').addEventListener('click', ()=> sigPac.clear());
+document.getElementById('clearDoc').addEventListener('click', ()=> sigDoc.clear());
+
+document.getElementById('btnPrint').addEventListener('click', ()=>{
+  const clone = document.createElement('div');
+  clone.style.fontFamily = '"Times New Roman", serif';
+  clone.style.color = '#000';
+  const title = document.createElement('h2'); title.textContent = 'Historia Clínica Odontológica'; title.style.textAlign='center';
+  clone.appendChild(title);
+
+  const header = document.createElement('div');
+  header.innerHTML = `<strong>Alertas:</strong><div>${escapeHtml(document.getElementById('alertas').value)}</div>
+  <strong>Nombre:</strong> ${escapeHtml(document.getElementById('nombre').value)} &nbsp;&nbsp;
+  <strong>Edad:</strong> ${escapeHtml(document.getElementById('edad').value)} &nbsp;&nbsp;
+  <strong>Sexo:</strong> ${escapeHtml(document.getElementById('sexo').value)}<br/>
+  <strong>Tel:</strong> ${escapeHtml(document.getElementById('telefono').value)} &nbsp;&nbsp;
+  <strong>Dirección:</strong> ${escapeHtml(document.getElementById('direccion').value)}<br/>
+  <strong>Email:</strong> ${escapeHtml(document.getElementById('email').value)}
+  `;
+  clone.appendChild(header);
+
+  const ht = document.createElement('div'); ht.innerHTML='<h3>Antecedentes Heredofamiliares</h3>';
+  const t1 = document.createElement('table'); t1.style.width='100%'; t1.border=1;
+  const thead = document.createElement('tr'); ['Padecimiento','Tiene','Familiar','Observaciones'].forEach(h=>{ const th=document.createElement('th'); th.textContent=h; thead.appendChild(th); }); t1.appendChild(thead);
+  document.querySelectorAll('#heredotbl tbody tr').forEach(tr=>{
+    const r = document.createElement('tr');
+    tr.querySelectorAll('td').forEach(td=>{
+      const cell = document.createElement('td'); const control = td.querySelector('select, input'); if(control) cell.textContent = control.value || ''; else cell.textContent = td.textContent || ''; r.appendChild(cell);
     });
+    t1.appendChild(r);
+  });
+  ht.appendChild(t1); clone.appendChild(ht);
+  const obsH = document.createElement('div'); obsH.innerHTML='<strong>Observaciones heredofamiliares:</strong><div>'+escapeHtml(document.getElementById('obs_heredo').value)+'</div>'; clone.appendChild(obsH);
 
-    // Antecedentes tablas
-    const heredoList = ["Diabetes","Hipertensión","Cardiopatías","Cáncer","Asma","Epilepsia","Alergias","Enfermedad renal","Enfermedad hepática","Otros"];
-    const personalList = ["Cirugías previas","Hospitalizaciones","Traumatismos","Enfermedades infectocontagiosas","Enfermedades respiratorias","Enfermedades digestivas","Medicamentos crónicos","Alergias","Otros"];
-    const heredoTbl = document.getElementById('heredoTbl');
-    const personalTbl = document.getElementById('personalTbl');
-
-    heredoList.forEach(name=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${name}</td>
-                      <td><select class="form-select"><option></option><option>Sí</option><option>No</option></select></td>
-                      <td><input class="form-control" type="text"></td>
-                      <td><input class="form-control" type="text"></td>`;
-      heredoTbl.appendChild(tr);
+  const pt = document.createElement('div'); pt.innerHTML='<h3>Antecedentes Personales</h3>';
+  const t2 = document.createElement('table'); t2.style.width='100%'; t2.border=1;
+  const head2 = document.createElement('tr'); ['Padecimiento','Tiene','Fecha','Observaciones'].forEach(h=>{ const th=document.createElement('th'); th.textContent=h; head2.appendChild(th); }); t2.appendChild(head2);
+  document.querySelectorAll('#personaltbl tbody tr').forEach(tr=>{
+    const r = document.createElement('tr');
+    tr.querySelectorAll('td').forEach(td=>{
+      const cell = document.createElement('td'); const control = td.querySelector('select, input'); if(control) cell.textContent = control.value || ''; else cell.textContent = td.textContent || ''; r.appendChild(cell);
     });
+    t2.appendChild(r);
+  });
+  pt.appendChild(t2); clone.appendChild(pt);
+  const obsP = document.createElement('div'); obsP.innerHTML='<strong>Observaciones personales:</strong><div>'+escapeHtml(document.getElementById('obs_personal').value)+'</div>'; clone.appendChild(obsP);
 
-    personalList.forEach(name=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${name}</td>
-                      <td><select class="form-select"><option></option><option>Sí</option><option>No</option></select></td>
-                      <td><input class="form-control" type="date"></td>
-                      <td><input class="form-control" type="text"></td>`;
-      personalTbl.appendChild(tr);
+  const am = document.createElement('div'); am.innerHTML = '<h3>Alergias y Medicación</h3><div><strong>Alergias:</strong> '+escapeHtml(document.getElementById('alergias').value)+'</div><div><strong>Medicación crónica:</strong> '+escapeHtml(document.getElementById('medicacion').value)+'</div>'; clone.appendChild(am);
+
+  const sd = document.createElement('div'); sd.innerHTML='<h3>Aparatos y Sistemas</h3>';
+  document.querySelectorAll('#systems > div').forEach(sysCard=>{
+    const h = sysCard.querySelector('h4'); const items = sysCard.querySelectorAll('select');
+    const sdiv = document.createElement('div'); sdiv.innerHTML = '<strong>'+ (h? h.textContent : '') +'</strong>';
+    items.forEach((it, idx)=>{
+      const lab = sysCard.querySelectorAll('label')[idx]; const val = it.value || '';
+      const p = document.createElement('div'); p.textContent = (lab? lab.textContent + ': ' : '') + val; sdiv.appendChild(p);
     });
+    const obs = sysCard.querySelector('textarea'); if(obs && obs.value) { const po = document.createElement('div'); po.textContent = 'Observaciones: ' + obs.value; sdiv.appendChild(po); }
+    sd.appendChild(sdiv);
+  });
+  clone.appendChild(sd);
 
-    // Odontograma FDI
-    const fdi = [11,12,13,14,15,16,17,18,21,22,23,24,25,26,27,28,31,32,33,34,35,36,37,38,41,42,43,44,45,46,47,48];
-    const odontoDiv = document.getElementById('odontograma');
-    fdi.forEach(num=>{
-      const d = document.createElement('div');
-      d.className = 'tooth state-0';
-      d.dataset.state = 0;
-      d.dataset.fdi = num;
-      d.textContent = num;
-      d.addEventListener('click', ()=>{
-        let s = parseInt(d.dataset.state,10);
-        s = (s+1) % 4;
-        d.dataset.state = s;
-        d.className = 'tooth state-' + s;
-        updateOdontoNotes();
-      });
-      odontoDiv.appendChild(d);
-    });
-    function updateOdontoNotes(){
-      const map = {0:'Normal',1:'Cariado',2:'Restaurado',3:'Ausente'};
-      const notes = [];
-      document.querySelectorAll('#odontograma .tooth').forEach(t=>{
-        if(t.dataset.state !== '0') notes.push(t.dataset.fdi + ': ' + map[t.dataset.state]);
-      });
-      document.getElementById('odontoNotas').value = notes.join('; ');
-    }
+  const od = document.createElement('div'); od.innerHTML = '<h3>Odontograma</h3>';
+  const odNotes = [];
+  document.querySelectorAll('#odontograma .tooth').forEach(t=>{ if(t.dataset.state && t.dataset.state !== '0') odNotes.push(t.dataset.fdi + ': ' + (t.dataset.state=='1'?'Cariado': t.dataset.state=='2'?'Restaurado':'Ausente')); });
+  od.innerHTML += '<div>' + (odNotes.length? odNotes.join('; ') : 'Sin hallazgos') + '</div>';
+  clone.appendChild(od);
 
-    // Firmas (SignaturePad)
-    const sigPacCanvas = document.getElementById('sigPac');
-    const sigDocCanvas = document.getElementById('sigDoc');
+  const dt = document.createElement('div'); dt.innerHTML = '<h3>Diagnóstico</h3><div>'+escapeHtml(document.getElementById('diagnostico').value)+'</div><h3>Tratamiento</h3><div>'+escapeHtml(document.getElementById('tratamiento').value)+'</div><h3>Consentimiento</h3><div><strong>Procedimiento:</strong> '+escapeHtml(document.getElementById('proc').value) + '</div><div>'+escapeHtml(document.getElementById('consent').value) + '</div>'; clone.appendChild(dt);
 
-    function resizeCanvas(canvas){
-      const ratio = Math.max(window.devicePixelRatio || 1, 1);
-      const w = canvas.offsetWidth;
-      const h = canvas.offsetHeight;
-      canvas.width = Math.floor(w * ratio);
-      canvas.height = Math.floor(h * ratio);
-      const ctx = canvas.getContext('2d');
-      ctx.scale(ratio, ratio);
-    }
-    resizeCanvas(sigPacCanvas); resizeCanvas(sigDocCanvas);
+  const sigDiv = document.createElement('div'); sigDiv.innerHTML = '<h3>Firmas</h3>';
+  const pimg = sigPac.isEmpty() ? null : sigPac.toDataURL();
+  const dimg = sigDoc.isEmpty() ? null : sigDoc.toDataURL();
+  const wrap = document.createElement('div'); wrap.style.display='flex'; wrap.style.gap='20px';
+  const left = document.createElement('div'); left.style.flex='1'; left.innerHTML = '<div>Firma paciente</div>';
+  const right = document.createElement('div'); right.style.flex='1'; right.innerHTML = '<div>Firma odontólogo</div>';
+  if(pimg){ const im = document.createElement('img'); im.src = pimg; im.style.width='260px'; left.appendChild(im); } else { const line = document.createElement('div'); line.style.borderTop='1px solid #000'; line.style.height='80px'; left.appendChild(line); }
+  if(dimg){ const im2 = document.createElement('img'); im2.src = dimg; im2.style.width='260px'; right.appendChild(im2); } else { const line2 = document.createElement('div'); line2.style.borderTop='1px solid #000'; line2.style.height='80px'; right.appendChild(line2); }
+  wrap.appendChild(left); wrap.appendChild(right); sigDiv.appendChild(wrap); clone.appendChild(sigDiv);
 
-    const sigPac = new SignaturePad(sigPacCanvas, { backgroundColor: 'rgba(255,255,255,0)' });
-    const sigDoc = new SignaturePad(sigDocCanvas, { backgroundColor: 'rgba(255,255,255,0)' });
-    document.getElementById('clearPac').addEventListener('click', ()=>{ sigPac.clear(); });
-    document.getElementById('clearDoc').addEventListener('click', ()=>{ sigDoc.clear(); });
-    window.addEventListener('resize', ()=>{ sigPac.clear(); sigDoc.clear(); resizeCanvas(sigPacCanvas); resizeCanvas(sigDocCanvas); });
+  const og = document.createElement('div'); og.innerHTML = '<h3>Observaciones generales</h3><div>' + escapeHtml(document.getElementById('obs_general').value) + '</div>'; clone.appendChild(og);
 
-    // Botón PDF robusto
-    const container = document.querySelector('.container');
-    const pdfBtn = document.createElement('button');
-    pdfBtn.type = 'button';
-    pdfBtn.className = 'btn btn-dark mb-3';
-    pdfBtn.id = 'btnGeneratePdf';
-    pdfBtn.textContent = 'Generar PDF (archivo legal)';
-    container.insertBefore(pdfBtn, container.firstChild);
+  const w = window.open('', '_blank');
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Historia Clínica</title><style>body{font-family:Times New Roman, serif; padding:12px; color:#000} table{border-collapse:collapse} th,td{border:1px solid #000; padding:6px}</style></head><body>');
+  w.document.write(clone.innerHTML);
+  w.document.write('</body></html>');
+  w.document.close();
+  setTimeout(()=>{ w.focus(); w.print(); }, 600);
+});
 
-    pdfBtn.addEventListener('click', async function(){
-      pdfBtn.disabled = true;
-      pdfBtn.textContent = 'Generando PDF...';
+document.getElementById('btnDownloadHtml').addEventListener('click', ()=>{
+  const blob = new Blob([document.documentElement.outerHTML], {type:'text/html'});
+  const name = (document.getElementById('nombre').value||'Historia_Clinica') + '.html';
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); URL.revokeObjectURL(a.href);
+});
 
-      const cloneRoot = document.createElement('div');
-      cloneRoot.style.background = '#fff';
-      cloneRoot.style.color = '#000';
-      cloneRoot.style.padding = '12px';
-      const formNode = document.getElementById('hcForm');
-      const cloned = formNode.cloneNode(true);
-
-      function replaceFormControlsWithText(root){
-        root.querySelectorAll('input').forEach(inp=>{
-          const span = document.createElement('span');
-          span.style.display = 'inline-block';
-          span.style.minWidth = '40px';
-          span.textContent = inp.value || '';
-          inp.parentNode.replaceChild(span, inp);
-        });
-        root.querySelectorAll('select').forEach(sel=>{
-          const span = document.createElement('span');
-          span.textContent = sel.value || '';
-          sel.parentNode.replaceChild(span, sel);
-        });
-        root.querySelectorAll('textarea').forEach(ta=>{
-          const pre = document.createElement('div');
-          pre.style.whiteSpace = 'pre-wrap';
-          pre.style.border = '1px solid #000';
-          pre.style.padding = '4px';
-          pre.textContent = ta.value || '';
-          ta.parentNode.replaceChild(pre, ta);
-        });
-        root.querySelectorAll('table').forEach(tbl=>{
-          tbl.querySelectorAll('input, select, textarea').forEach(n=>{
-            if(n.tagName.toLowerCase() === 'input' || n.tagName.toLowerCase() === 'select'){
-              const sp = document.createElement('span');
-              sp.textContent = n.value || '';
-              n.parentNode.replaceChild(sp, n);
-            } else if(n.tagName.toLowerCase() === 'textarea'){
-              const pr = document.createElement('div');
-              pr.style.whiteSpace = 'pre-wrap';
-              pr.style.border = '1px solid #000';
-              pr.style.padding = '4px';
-              pr.textContent = n.value || '';
-              n.parentNode.replaceChild(pr, n);
-            }
-          });
-        });
-      }
-
-      function injectSignatures(cloneRootEl){
-        const pacData = sigPac.isEmpty() ? null : sigPac.toDataURL('image/png');
-        const docData = sigDoc.isEmpty() ? null : sigDoc.toDataURL('image/png');
-        const clonePac = cloneRootEl.querySelector('#sigPac');
-        const cloneDoc = cloneRootEl.querySelector('#sigDoc');
-        if(clonePac){
-          if(pacData){
-            const img = document.createElement('img');
-            img.src = pacData;
-            img.style.width = '260px';
-            img.style.border = '1px solid #000';
-            clonePac.parentNode.replaceChild(img, clonePac);
-          } else {
-            const line = document.createElement('div');
-            line.style.height = '80px';
-            line.style.borderTop = '1px solid #000';
-            clonePac.parentNode.replaceChild(line, clonePac);
-          }
-        }
-        if(cloneDoc){
-          if(docData){
-            const img2 = document.createElement('img');
-            img2.src = docData;
-            img2.style.width = '260px';
-            img2.style.border = '1px solid #000';
-            cloneDoc.parentNode.replaceChild(img2, cloneDoc);
-          } else {
-            const line2 = document.createElement('div');
-            line2.style.height = '80px';
-            line2.style.borderTop = '1px solid #000';
-            cloneDoc.parentNode.replaceChild(line2, cloneDoc);
-          }
-        }
-      }
-
-      function addOdontoSummary(cloneEl){
-        const labels = {0:'Normal',1:'Cariado',2:'Restaurado',3:'Ausente'};
-        const marked = [];
-        document.querySelectorAll('#odontograma .tooth').forEach(t=>{
-          if(t.dataset.state && t.dataset.state !== '0') marked.push(`${t.dataset.fdi}: ${labels[t.dataset.state]}`);
-        });
-        if(marked.length){
-          const div = document.createElement('div');
-          div.style.marginTop = '8px';
-          div.style.fontSize = '12px';
-          div.textContent = "Resumen odontograma: " + marked.join('; ');
-          cloneEl.appendChild(div);
-        }
-      }
-
-      cloneRoot.appendChild(cloned);
-      replaceFormControlsWithText(cloned);
-      injectSignatures(cloned);
-      addOdontoSummary(cloneRoot);
-
-      const nombre = (document.getElementById('nombre').value || 'Paciente').replace(/\s+/g,'_');
-      const now = new Date();
-      const ts = now.toISOString().slice(0,19).replace('T','_').replace(/:/g,'-');
-      const filename = `Historia_Clinica_${nombre}_${ts}.pdf`;
-
-      const opt = {
-        margin: [0.3, 0.4, 0.5, 0.4],
-        filename: filename,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-      };
-
-      try {
-        const worker = html2pdf().set(opt).from(cloneRoot);
-        worker.toPdf().get('pdf').then((pdf) => {
-          const totalPages = pdf.internal.getNumberOfPages();
-          const pw = pdf.internal.pageSize.getWidth();
-          const ph = pdf.internal.pageSize.getHeight();
-          const dateStr = new Date().toLocaleString();
-          pdf.setFontSize(9);
-          pdf.setTextColor(80);
-          for(let i=1;i<=totalPages;i++){
-            pdf.setPage(i);
-            pdf.text(`Generado: ${dateStr}`, 0.5, ph - 0.25);
-            pdf.text(`Página ${i} de ${totalPages}`, pw/2, ph - 0.25, { align: 'center' });
-            pdf.text('Historia Clínica Odontológica', pw - 0.5, ph - 0.25, { align: 'right' });
-          }
-        }).save();
-      } catch(err){
-        console.error('Error generando PDF:', err);
-        alert('Ocurrió un error al generar el PDF. Revisa la consola del navegador.');
-      } finally {
-        pdfBtn.disabled = false;
-        pdfBtn.textContent = 'Generar PDF (archivo legal)';
-      }
-    });
-
-  })();
-  </script>
+function escapeHtml(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
 </body>
 </html>
